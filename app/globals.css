@@ -31,3 +31,6 @@ body {
     --radius: 0.5rem;
   }
 }
+.dialog-content-custom {
+  min-height: 300px; /* Adjust height as needed */
+}
