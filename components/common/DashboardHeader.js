@@ -10,10 +10,15 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "../ui/button";
 import { CircleUser, Menu, Package2 } from "lucide-react";
 import Link from "next/link";
-
 import { navLinks } from "@/lib/navlinks";
 import { SidebarLink } from "./SidebarLink";
-export default function DashboardHeader() {
+import { authOptions } from "@/app/utils/authOptions";
+import { getServerSession } from "next-auth";
+import Logout from "./Logout";
+
+export default async function DashboardHeader() {
+  const session = await getServerSession(authOptions);
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
       <Sheet>
@@ -30,7 +35,7 @@ export default function DashboardHeader() {
               className="flex items-center gap-2 text-lg font-semibold"
             >
               <Package2 className="h-6 w-6" />
-              <span className="sr-only">Task Scheduler</span>
+              <span className="sr-only">Task Scheduler </span>
             </Link>
             {navLinks.map((link) => (
               <SidebarLink key={link.label} {...link} />
@@ -47,14 +52,14 @@ export default function DashboardHeader() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuLabel>{session.user.name}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem>
             <Link href="/dashboard/settings">Settings</Link>
           </DropdownMenuItem>
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <Logout />
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
