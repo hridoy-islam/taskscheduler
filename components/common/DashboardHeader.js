@@ -10,7 +10,12 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "../ui/button";
 import { CircleUser, Menu, Package2 } from "lucide-react";
 import Link from "next/link";
-import { navLinks } from "@/lib/navlinks";
+import {
+  adminNavLinks,
+  companyNavLinks,
+  creatorNavLinks,
+  userNavLinks,
+} from "@/lib/navlinks";
 import { SidebarLink } from "./SidebarLink";
 import { authOptions } from "@/app/utils/authOptions";
 import { getServerSession } from "next-auth";
@@ -37,9 +42,22 @@ export default async function DashboardHeader() {
               <Package2 className="h-6 w-6" />
               <span className="sr-only">Task Scheduler </span>
             </Link>
-            {navLinks.map((link) => (
-              <SidebarLink key={link.label} {...link} />
-            ))}
+            {session.user.role === "admin" &&
+              adminNavLinks.map((link) => (
+                <SidebarLink key={link.label} {...link} />
+              ))}
+            {session.user.role === "company" &&
+              companyNavLinks.map((link) => (
+                <SidebarLink key={link.label} {...link} />
+              ))}
+            {session.user.role === "creator" &&
+              creatorNavLinks.map((link) => (
+                <SidebarLink key={link.label} {...link} />
+              ))}
+            {session.user.role === "user" &&
+              userNavLinks.map((link) => (
+                <SidebarLink key={link.label} {...link} />
+              ))}
           </nav>
         </SheetContent>
       </Sheet>

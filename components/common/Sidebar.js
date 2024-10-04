@@ -7,9 +7,17 @@ import { Input } from "../ui/input";
 import InviteMember from "./InviteMember";
 import { ScrollArea } from "../ui/scroll-area";
 import { Button } from "../ui/button";
-import { navLinks } from "@/lib/navlinks";
+import {
+  adminNavLinks,
+  companyNavLinks,
+  creatorNavLinks,
+  userNavLinks,
+} from "@/lib/navlinks";
+import { useSession } from "next-auth/react";
 
 export default function Sidebar() {
+  const { data: session, status } = useSession();
+  console.log(session);
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState([
     {
@@ -87,6 +95,10 @@ export default function Sidebar() {
   const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="hidden border-r bg-muted/40 md:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
@@ -98,9 +110,22 @@ export default function Sidebar() {
         </div>
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {navLinks.map((link) => (
-              <SidebarLink key={link.label} {...link} />
-            ))}
+            {session.user.role === "admin" &&
+              adminNavLinks.map((link) => (
+                <SidebarLink key={link.label} {...link} />
+              ))}
+            {session.user.role === "company" &&
+              companyNavLinks.map((link) => (
+                <SidebarLink key={link.label} {...link} />
+              ))}
+            {session.user.role === "creator" &&
+              creatorNavLinks.map((link) => (
+                <SidebarLink key={link.label} {...link} />
+              ))}
+            {session.user.role === "user" &&
+              userNavLinks.map((link) => (
+                <SidebarLink key={link.label} {...link} />
+              ))}
             <div className="mt-2 flex-1">
               <Input
                 type="text"
@@ -109,8 +134,7 @@ export default function Sidebar() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="mb-4"
               />
-              <InviteMember />
-
+              {session.user.role === "admin" && <InviteMember />}
               <ScrollArea className="h-full max-h-[600px] overflow-auto">
                 {filteredUsers.map((user) => (
                   <Link key={user.id} href="/dashboard/user/1">
