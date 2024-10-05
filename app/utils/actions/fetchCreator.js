@@ -2,7 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "../authOptions";
 
-export const fetchCreator = async () => {
+export const fetchCreator = async (page, limit, searchTerm = "") => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -11,15 +11,20 @@ export const fetchCreator = async () => {
 
   const token = session.accessToken;
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/users?role=creator`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  // Construct the API URL
+  const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/users?role=creator`);
+  url.searchParams.append("page", page);
+  url.searchParams.append("limit", limit);
+  if (searchTerm.trim()) {
+    url.searchParams.append("searchTerm", searchTerm);
+  }
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   if (!response.ok) {
     throw new Error("Failed to fetch creator");

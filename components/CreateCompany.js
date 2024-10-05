@@ -17,13 +17,13 @@ import { RegisterUser } from "@/app/utils/actions/RegisterUser";
 import { useForm } from "react-hook-form";
 
 export default function CreateCompany({ onUserCreated }) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCompanyDialogOpen, setIsCompanyDialogOpen] = useState(false);
   const { register, handleSubmit, reset } = useForm();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState(null);
 
-  const onSubmit = async (data) => {
+  const onCompanySubmit = async (data) => {
     data.role = "company";
     setIsLoading(true);
     try {
@@ -32,23 +32,28 @@ export default function CreateCompany({ onUserCreated }) {
       reset();
       onUserCreated();
       await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate a delay
-      fetchCompaniesList(); // Refresh the company list
+      // Refresh company list if needed
     } catch (error) {
       setError(error.message);
     } finally {
       setIsLoading(false);
-      setIsDialogOpen(false);
+      setIsCompanyDialogOpen(false);
     }
   };
-  const handleClose = () => {
-    setIsDialogOpen(false);
+
+  const handleCompanyClose = () => {
+    setIsCompanyDialogOpen(false);
     reset();
     setError(null);
+    setIsSuccess(false);
   };
+
   return (
     <div className="flex justify-between items-center mb-6">
       <h1 className="text-2xl font-bold">Company List</h1>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+
+      {/* Create Company Dialog */}
+      <Dialog open={isCompanyDialogOpen} onOpenChange={setIsCompanyDialogOpen}>
         <DialogTrigger asChild>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -63,7 +68,7 @@ export default function CreateCompany({ onUserCreated }) {
             </DialogDescription>
           </DialogHeader>
           {!isSuccess ? (
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onCompanySubmit)}>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="name" className="text-right">
@@ -117,7 +122,7 @@ export default function CreateCompany({ onUserCreated }) {
               <p className="text-center text-green-600">
                 Company created successfully!
               </p>
-              <Button onClick={handleClose} className="w-full">
+              <Button onClick={handleCompanyClose} className="w-full">
                 Close
               </Button>
             </div>

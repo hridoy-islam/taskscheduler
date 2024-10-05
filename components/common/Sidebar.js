@@ -17,7 +17,7 @@ import { useSession } from "next-auth/react";
 
 export default function Sidebar() {
   const { data: session, status } = useSession();
-  console.log(session);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState([
     {
@@ -110,19 +110,19 @@ export default function Sidebar() {
         </div>
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {session.user.role === "admin" &&
+            {session?.user?.role === "admin" &&
               adminNavLinks.map((link) => (
                 <SidebarLink key={link.label} {...link} />
               ))}
-            {session.user.role === "company" &&
+            {session?.user?.role === "company" &&
               companyNavLinks.map((link) => (
                 <SidebarLink key={link.label} {...link} />
               ))}
-            {session.user.role === "creator" &&
+            {session?.user?.role === "creator" &&
               creatorNavLinks.map((link) => (
                 <SidebarLink key={link.label} {...link} />
               ))}
-            {session.user.role === "user" &&
+            {session?.user?.role === "user" &&
               userNavLinks.map((link) => (
                 <SidebarLink key={link.label} {...link} />
               ))}
@@ -134,8 +134,19 @@ export default function Sidebar() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="mb-4"
               />
-              {session.user.role === "admin" && <InviteMember />}
+
+              {session?.user?.role === "admin" && <InviteMember />}
               <ScrollArea className="h-full max-h-[600px] overflow-auto">
+                <Link href={`/dashboard/task/${session?.user?.id}`}>
+                  <Button variant="ghost" className="w-full justify-start mb-2">
+                    <img
+                      src={"https://github.com/shadcn.png"}
+                      alt={"ok"}
+                      className="w-6 h-6 rounded-full mr-2"
+                    />
+                    <span>User Name</span>
+                  </Button>
+                </Link>
                 {filteredUsers.map((user) => (
                   <Link key={user.id} href="/dashboard/user/1">
                     <Button

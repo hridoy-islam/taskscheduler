@@ -1,12 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Star,
-  Plus,
   MousePointer,
   UserRoundCheck,
   Calendar,
@@ -20,10 +19,45 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useForm } from "react-hook-form";
+import { createTask } from "@/app/utils/actions/createTask";
+import { useSession } from "next-auth/react";
 
-export default function TaskList({ initialName }) {
+export default function TaskList() {
+  const { data: session } = useSession();
+  const { register, handleSubmit, reset } = useForm();
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [tasks, setTasks] = useState([]);
+
+  const fetchTasks = async () => {
+    if (session) {
+      const userid = session?.user?.id;
+      const token = session?.accessToken;
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/task?author=${userid}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setTasks(data?.data?.result); // Update tasks state
+      } else {
+        console.error("Failed to fetch tasks", response.statusText);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, [session]); // Run effect when session changes
+
   const openTaskDrawer = (task) => {
     setSelectedTask(task);
     setIsDrawerOpen(true);
@@ -33,29 +67,8 @@ export default function TaskList({ initialName }) {
     setIsDrawerOpen(false);
   };
 
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      text: "Create project proposal",
-      completed: false,
-      list: "My Day",
-    },
-    { id: 2, text: "Review team assignments", completed: true, list: "My Day" },
-    // Add more tasks as needed
-  ]);
-
   const [newTask, setNewTask] = useState("");
   const [activeList, setActiveList] = useState("My Day");
-
-  const addTask = () => {
-    if (newTask.trim() !== "") {
-      setTasks([
-        ...tasks,
-        { id: Date.now(), text: newTask, completed: false, list: activeList },
-      ]);
-      setNewTask("");
-    }
-  };
 
   const toggleTask = (id) => {
     setTasks(
@@ -65,10 +78,32 @@ export default function TaskList({ initialName }) {
     );
   };
 
-  const filteredTasks = tasks.filter((task) => task.list === activeList);
+  const onSubmit = async (data) => {
+    data.author = session?.user?.id;
+    const token = session?.accessToken;
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/task`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    reset();
+    if (response.ok) {
+      fetchTasks(); // Re-fetch tasks to include the new one
+    }
+  };
+
+  const filteredTasks = Array.isArray(tasks)
+    ? tasks.filter((task) => task.list === activeList)
+    : [];
+
   return (
     <div className="">
-      <h1 className="text-xl font-semibold">{initialName}</h1>
+      <h1 className="text-xl font-semibold">{session?.user?.name}</h1>
       <main className="flex-1 p-4 overflow-auto">
         <ScrollArea className="h-[calc(90vh-8rem)]">
           <div className="space-y-2">
@@ -157,18 +192,11 @@ export default function TaskList({ initialName }) {
         </ScrollArea>
       </main>
       <footer className="bg-white shadow p-4">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            addTask();
-          }}
-          className="flex space-x-2"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2">
           <Input
+            {...register("taskName", { required: true })}
             type="text"
             placeholder="Add a task"
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
             className="flex-1"
           />
           <Button type="submit">

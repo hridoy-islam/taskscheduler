@@ -16,6 +16,15 @@ export default function Home() {
   const [error, setError] = useState(null);
   const router = useRouter();
 
+  const { data: session, status } = useSession();
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (session?.accessToken) {
+    router.push("/dashboard");
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const result = await signIn("credentials", {
