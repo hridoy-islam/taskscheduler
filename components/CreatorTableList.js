@@ -1,6 +1,4 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Select from "react-select";
 import {
   Table,
@@ -10,16 +8,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Pencil, Eye } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchCreator } from "@/app/utils/actions/fetchCreator";
 import { Input } from "./ui/input";
 import DynamicPagination from "./common/DynamicPagination";
 import { fetchCompanies } from "@/app/utils/actions/fetchCompanies";
-import { updateUserProfile } from "@/app/utils/actions/updateUserProfile";
+import { useSession } from "next-auth/react";
 
 export default function CreatorTableList({ refreshKey }) {
+  const { data: session } = useSession();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,13 +27,13 @@ export default function CreatorTableList({ refreshKey }) {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    const fetchData = async (page, entriesPerPage, searchTerm = "") => {
+  const fetchData = useCallback(
+    async (page, entriesPerPage, searchTerm = "") => {
       try {
         const response = await fetchCreator(page, entriesPerPage, searchTerm);
         setUsers(response.data.result);
         setTotalPages(response.data.meta.totalPage);
-        const companyResponse = await fetchCompanies(); // Use your fetchCompanies action
+        const companyResponse = await fetchCompanies();
         const companyOptions = companyResponse.data.result.map((company) => ({
           value: company._id,
           label: company.name,
@@ -46,10 +44,13 @@ export default function CreatorTableList({ refreshKey }) {
       } finally {
         setLoading(false);
       }
-    };
+    },
+    []
+  );
 
+  useEffect(() => {
     fetchData(currentPage, entriesPerPage, searchTerm);
-  }, [currentPage, entriesPerPage, searchTerm, refreshKey]); // Empty dependency array ensures this runs only once
+  }, [currentPage, entriesPerPage, searchTerm, refreshKey, fetchData]);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -59,21 +60,33 @@ export default function CreatorTableList({ refreshKey }) {
   const handleEntriesPerPageChange = (event) => {
     setEntriesPerPage(Number(event.target.value));
     setCurrentPage(1); // Reset to first page when changing entries per page
-  }; // Empty dependency array ensures this runs only once
+  };
 
   const handleCompanyChange = async (selectedOption, userId) => {
     if (!selectedOption) return; // Handle case where selection is cleared
-    const company = selectedOption.value;
-    try {
-      // Update user profile dynamically
-      await updateUserProfile(userId, { company }); // You can add more fields here
+    const company = selectedOption.value; // Get the selected company's ID
+    const updatedFields = { company }; // Create the payload
 
-      // Optionally, update the local state to reflect the change
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user._id === userId ? { ...user, company } : user
-        )
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json", // Ensure content type is set
+            Authorization: `Bearer ${session?.accessToken}`, // Ensure token is available
+          },
+          body: JSON.stringify(updatedFields), // Convert payload to JSON string
+        }
       );
+
+      if (!response.ok) {
+        throw new Error("Failed to update user profile");
+      } else {
+        fetchData(currentPage, entriesPerPage, searchTerm);
+      }
+
+      // Optionally update local state and refetch data...
     } catch (err) {
       console.error("Error updating user profile:", err);
       // Handle error (e.g., set error state)
@@ -88,8 +101,6 @@ export default function CreatorTableList({ refreshKey }) {
     return <div>Error: {error}</div>;
   }
 
-  console.log(users);
-
   return (
     <>
       <div className="flex gap-10 mb-6">
@@ -99,7 +110,6 @@ export default function CreatorTableList({ refreshKey }) {
           value={searchTerm}
           onChange={handleSearch}
         />
-
         <select
           value={entriesPerPage}
           onChange={handleEntriesPerPageChange}
@@ -118,28 +128,20 @@ export default function CreatorTableList({ refreshKey }) {
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Company</TableHead>
-            <TableHead>Assign Company</TableHead>
+            <TableHead>Assigned Company</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {users.map((user) => (
             <TableRow key={user.id}>
-              {/* <TableCell>
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={user.logo} alt={`${user.name} logo`} />
-                  <AvatarFallback>
-                    {user.name.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </TableCell> */}
               <TableCell>{user.name}</TableCell>
               <TableCell>{user.email}</TableCell>
-              <TableCell>Un</TableCell>
-
+              <TableCell>{user.company ? user.company.name : "N/A"}</TableCell>
               <TableCell>
                 <Select
                   options={companies}
+                  value={null}
                   onChange={(selectedOption) =>
                     handleCompanyChange(selectedOption, user._id)
                   }

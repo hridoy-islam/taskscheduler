@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Pencil, Eye, ArrowLeftRight } from "lucide-react";
+import { Pencil, Eye, ArrowLeftRight, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchCompanies } from "@/app/utils/actions/fetchCompanies";
 import Link from "next/link";
@@ -81,12 +81,6 @@ export default function CompanyTableList({ refreshKey }) {
           <option value={50}>50</option>
           <option value={100}>100</option>
         </select>
-        <Link href={"/dashboard/company/usermanage"}>
-          <Button>
-            <ArrowLeftRight className="mr-2 h-4 w-4" />
-            User Manage
-          </Button>
-        </Link>
       </div>
       <Table>
         <TableHeader>
@@ -120,6 +114,18 @@ export default function CompanyTableList({ refreshKey }) {
                     <Eye className="mr-2 h-4 w-4" />
                     View Tasks
                   </Button>
+                  <Link href={`/dashboard/company/usermanage/${user._id}`}>
+                    <Button>
+                      <ArrowLeftRight className="mr-2 h-4 w-4" />
+                      User Manage
+                    </Button>
+                  </Link>
+                  <Link href={`/dashboard/company/viewstuff/${user._id}`}>
+                    <Button variant="outline">
+                      <Users className="mr-2 h-4 w-4" />
+                      View All Stuff
+                    </Button>
+                  </Link>
                 </div>
               </TableCell>
             </TableRow>

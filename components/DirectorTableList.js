@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import Select from "react-select";
+// import Select from "react-select";
 import {
   Table,
   TableBody,
@@ -12,18 +12,17 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "./ui/input";
 import DynamicPagination from "./common/DynamicPagination";
-import { fetchCompanies } from "@/app/utils/actions/fetchCompanies";
-import { useSession } from "next-auth/react";
-import { fetchUsers } from "@/app/utils/actions/fetchUsers";
+// import { fetchCompanies } from "@/app/utils/actions/fetchCompanies";
+// import { useSession } from "next-auth/react";
 import EditUserProfile from "./EditUserProfile";
-import { updateUserProfile } from "@/app/utils/actions/updateUserProfile";
+import { fetchDirectors } from "@/app/utils/actions/fetchDirectors";
 
-export default function UserTableList({ refreshKey }) {
-  const { data: session } = useSession();
+export default function DirectorTableList({ refreshKey }) {
+  // const { data: session } = useSession();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [companies, setCompanies] = useState([]);
+  // const [companies, setCompanies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
@@ -34,15 +33,15 @@ export default function UserTableList({ refreshKey }) {
   const fetchData = useCallback(
     async (page, entriesPerPage, searchTerm = "") => {
       try {
-        const response = await fetchUsers(page, entriesPerPage, searchTerm);
+        const response = await fetchDirectors(page, entriesPerPage, searchTerm);
         setUsers(response.data.result);
         setTotalPages(response.data.meta.totalPage);
-        const companyResponse = await fetchCompanies();
-        const companyOptions = companyResponse.data.result.map((company) => ({
-          value: company._id,
-          label: company.name,
-        }));
-        setCompanies(companyOptions);
+        //const companyResponse = await fetchCompanies();
+        //const companyOptions = companyResponse.data.result.map((company) => ({
+        //   value: company._id,
+        //   label: company.name,
+        // }));
+        // setCompanies(companyOptions);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -66,36 +65,36 @@ export default function UserTableList({ refreshKey }) {
     setCurrentPage(1); // Reset to first page when changing entries per page
   };
 
-  const handleCompanyChange = async (selectedOption, userId) => {
-    if (!selectedOption) return; // Handle case where selection is cleared
-    const company = selectedOption.value; // Get the selected company's ID
-    const updatedFields = { company }; // Create the payload
+  // const handleCompanyChange = async (selectedOption, userId) => {
+  //   if (!selectedOption) return; // Handle case where selection is cleared
+  //   const company = selectedOption.value; // Get the selected company's ID
+  //   const updatedFields = { company }; // Create the payload
 
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json", // Ensure content type is set
-            Authorization: `Bearer ${session?.accessToken}`, // Ensure token is available
-          },
-          body: JSON.stringify(updatedFields), // Convert payload to JSON string
-        }
-      );
+  //   try {
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`,
+  //       {
+  //         method: "PATCH",
+  //         headers: {
+  //           "Content-Type": "application/json", // Ensure content type is set
+  //           Authorization: `Bearer ${session?.accessToken}`, // Ensure token is available
+  //         },
+  //         body: JSON.stringify(updatedFields), // Convert payload to JSON string
+  //       }
+  //     );
 
-      if (!response.ok) {
-        throw new Error("Failed to update user profile");
-      } else {
-        fetchData(currentPage, entriesPerPage, searchTerm);
-      }
+  //     if (!response.ok) {
+  //       throw new Error("Failed to update user profile");
+  //     } else {
+  //       fetchData(currentPage, entriesPerPage, searchTerm);
+  //     }
 
-      // Optionally update local state and refetch data...
-    } catch (err) {
-      console.error("Error updating user profile:", err);
-      // Handle error (e.g., set error state)
-    }
-  };
+  //     // Optionally update local state and refetch data...
+  //   } catch (err) {
+  //     console.error("Error updating user profile:", err);
+  //     // Handle error (e.g., set error state)
+  //   }
+  // };
   const handleEditClick = (user) => {
     setSelectedUser(user);
     setIsDialogOpen(true);
@@ -103,21 +102,13 @@ export default function UserTableList({ refreshKey }) {
 
   const handleUpdateUser = async (updatedUsers) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/users/${selectedUser._id}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${session?.accessToken}`,
-          },
-          body: JSON.stringify(updatedUsers),
-        }
-      );
+      const res = await updateUserProfile(selectedUser.id, updatedUsers);
 
-      if (!response.ok) {
-        console.log("Error On Update");
+      if (res.ok) {
+        fetchData(currentPage, entriesPerPage, searchTerm);
+      } else {
+        throw new Error("Failed to update user");
       }
-      fetchData(currentPage, entriesPerPage, searchTerm);
     } catch (error) {
       console.error("Error updating user:", error);
     }
@@ -157,8 +148,8 @@ export default function UserTableList({ refreshKey }) {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Company</TableHead>
-            <TableHead>Assigned Company</TableHead>
+            {/* <TableHead>Company</TableHead>
+            <TableHead>Assigned Company</TableHead> */}
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -167,8 +158,8 @@ export default function UserTableList({ refreshKey }) {
             <TableRow key={user.id}>
               <TableCell>{user.name}</TableCell>
               <TableCell>{user.email}</TableCell>
-              <TableCell>{user.company ? user.company.name : "N/A"}</TableCell>
-              <TableCell>
+              {/* <TableCell>{user.company ? user.company.name : "N/A"}</TableCell> */}
+              {/* <TableCell>
                 <Select
                   options={companies}
                   value={null}
@@ -180,7 +171,7 @@ export default function UserTableList({ refreshKey }) {
                   className="react-select-container"
                   classNamePrefix="react-select"
                 />
-              </TableCell>
+              </TableCell> */}
               <TableCell>
                 <div className="flex space-x-2">
                   <Button

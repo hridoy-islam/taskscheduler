@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -21,6 +21,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
+import { useSession } from "next-auth/react";
+import { useParams } from "next/navigation";
+import { fetchCreatorsByCompany } from "@/app/utils/actions/fetchCreatorsByCompany";
+import { fetchUsersByCompany } from "@/app/utils/actions/fetchUsersByCompany";
 
 // Mock data
 const mockCreators = [
@@ -38,7 +42,12 @@ const mockUsers = [
 ];
 
 export default function UserManage() {
-  const [users, setUsers] = useState(mockUsers);
+  const { data: session } = useSession();
+  const { companyId } = useParams(); // Get companyId from URL params
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [creators, setCreators] = useState([]);
 
   const toggleAssignment = (userId, creatorId) => {
     setUsers(
@@ -53,6 +62,23 @@ export default function UserManage() {
       })
     );
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const fetchedUsers = await fetchUsersByCompany(companyId); // Fetch users
+        const fetchedCreators = await fetchCreatorsByCompany(companyId);
+        setUsers(fetchedUsers.data.result);
+        setCreators(fetchedCreators.data.result);
+      } catch (err) {
+        setError("Failed to fetch data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [companyId]);
 
   return (
     <Card className="w-full  mx-auto">
@@ -69,7 +95,7 @@ export default function UserManage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
+            {mockUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>

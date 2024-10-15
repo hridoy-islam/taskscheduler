@@ -1,7 +1,7 @@
 "use client";
 import { Package2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SidebarLink } from "./SidebarLink";
 import { Input } from "../ui/input";
 import InviteMember from "./InviteMember";
@@ -14,6 +14,7 @@ import {
   userNavLinks,
 } from "@/lib/navlinks";
 import { useSession } from "next-auth/react";
+import { fetchColuges } from "@/app/utils/actions/fetchColleges";
 
 export default function Sidebar() {
   const { data: session, status } = useSession();
@@ -95,6 +96,25 @@ export default function Sidebar() {
   const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  //const [tasks, setTasks] = useState([]); // State to hold tasks
+
+  // // Fetch tasks from API on component mount
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (session?.user?.id) {
+  //       try {
+  //         const response = await fetchColuges({ author: session.user.id });
+  //         setTasks(response); // Set fetched tasks to state
+  //       } catch (error) {
+  //         console.error("Error fetching tasks:", error);
+  //       }
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, [session]);
+
   if (status === "loading") {
     return <div>Loading...</div>;
   }
@@ -144,7 +164,7 @@ export default function Sidebar() {
                       alt={"ok"}
                       className="w-6 h-6 rounded-full mr-2"
                     />
-                    <span>User Name</span>
+                    <span>{session?.user?.name}</span>
                   </Button>
                 </Link>
                 {filteredUsers.map((user) => (
