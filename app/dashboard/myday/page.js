@@ -14,7 +14,7 @@ export default function Page() {
   const fetchTasks = async () => {
     const token = session?.accessToken;
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/task?author=${session.user.id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/task?assigned=${session.user.id}`,
       {
         method: "GET",
         headers: {

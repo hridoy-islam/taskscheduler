@@ -11,6 +11,8 @@ import {
   UserRoundCheck,
   Calendar,
   CornerDownLeft,
+  ArrowRight,
+  CircleUser,
 } from "lucide-react";
 import TaskDetails from "@/components/common/TaskDetails";
 import { Badge } from "../ui/badge";
@@ -27,8 +29,9 @@ const TaskList = ({
   tasks,
   onMarkAsImportant,
   onToggleTaskCompletion,
-  showAddTaskForm,
   onNewTaskSubmit,
+  showAddTaskForm,
+  onTaskClick,
 }) => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -44,11 +47,11 @@ const TaskList = ({
     setIsDrawerOpen(false);
   };
 
-  const handleTaskUpdate = async () => {
+  const handleTaskUpdate = async (updatedTask) => {
     await fetchTasks();
   };
 
-  const sortedTasks = tasks.sort((a, b) => {
+  const sortedTasks = tasks?.sort((a, b) => {
     if (a.status === "completed" && b.status === "pending") return 1; // b goes up
     if (a.status === "pending" && b.status === "completed") return -1; // a goes up
     return 0; // maintain original order
@@ -64,7 +67,7 @@ const TaskList = ({
       <main className="flex-1 p-4 overflow-auto">
         <ScrollArea className="h-[calc(85vh-8rem)]">
           <div className="space-y-2">
-            {sortedTasks.map((task) => (
+            {sortedTasks?.map((task) => (
               <div
                 key={task._id}
                 className={`flex items-center space-x-2 bg-white p-3 rounded-lg shadow ${
@@ -84,13 +87,14 @@ const TaskList = ({
                 >
                   {task.taskName}
                 </span>
+
                 <span>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
                         <Badge
                           variant="outline"
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 bg-blue-100"
                         >
                           <UserRoundCheck className="h-3 w-3" />
                           {task.author.name}
@@ -102,11 +106,39 @@ const TaskList = ({
                     </Tooltip>
                   </TooltipProvider>
                 </span>
+
+                <span>
+                  <Badge variant="outline" className={"bg-yellow-100"}>
+                    <ArrowRight className="h-3 w-3 " />
+                  </Badge>
+                </span>
+
                 <span>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
-                        <Badge className="flex items-center gap-1">
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1 bg-green-100"
+                        >
+                          <CircleUser className="h-3 w-3" />
+                          {task?.assigned?.name}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Assigned To {task?.assigned?.name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </span>
+                <span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge
+                          className="flex items-center gap-1 bg-red-700"
+                          onClick={() => openTaskDrawer(task)}
+                        >
                           <Calendar className="h-3 w-3" />
                           {moment(task.dueDate).format("MMM Do YY")}
                         </Badge>
@@ -178,13 +210,6 @@ const TaskList = ({
           </form>
         </footer>
       )}
-
-      <TaskDetails
-        task={selectedTask}
-        isOpen={isDrawerOpen}
-        onClose={closeTaskDrawer}
-        onUpdate={handleTaskUpdate}
-      />
     </div>
   );
 };

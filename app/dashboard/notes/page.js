@@ -25,7 +25,7 @@ const colors = [
 ];
 
 export default function Component() {
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, reset } = useForm();
   const [notes, setNotes] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const { data: session } = useSession();
@@ -124,7 +124,7 @@ export default function Component() {
     });
 
     if (response.ok) {
-      console.log(response);
+      reset();
       fetchNotes(); // Refetch tasks to include the new one
     } else {
       console.error("Failed to add note", response.statusText);

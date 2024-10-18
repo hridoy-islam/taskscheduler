@@ -15,23 +15,27 @@ import { Input } from "../ui/input";
 import RichTextEditor from "./RichTextEditor";
 import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
-export default function TaskDetails({ task, isOpen, onClose }) {
+export default function TaskDetails({ task, isOpen, onClose, onUpdate }) {
   const { register, handleSubmit, reset, setValue } = useForm();
   const { data: session } = useSession();
+  const [dueDate, setDueDate] = useState(null);
 
   useEffect(() => {
-    console.log(task);
     if (task) {
       reset({
         description: task?.description,
-        // Include other fields as necessary, like "daysRequired" and "description"
+        // Set initial due date if it exists
       });
+      setDueDate(task?.dueDate ? new Date(task.dueDate) : null);
     }
   }, [task, reset]);
 
   const handleFormSubmit = async (data) => {
+    console.log(data);
     if (!task) return; // Do nothing if there's no task
 
     // Prepare the PATCH request
@@ -44,13 +48,13 @@ export default function TaskDetails({ task, isOpen, onClose }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, dueDate }),
       }
     );
 
     if (response.ok) {
       const updatedTask = await response.json();
-      //onUpdate(updatedTask); // Pass the updated task to the parent for refetching
+      onUpdate(updatedTask); // Pass the updated task to the parent for refetching
       onClose(); // Close the modal after submission
     } else {
       console.error("Failed to update task", response.statusText);
@@ -70,8 +74,12 @@ export default function TaskDetails({ task, isOpen, onClose }) {
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)}>
           <div className="p-4 pb-0">
-            <Label>Days Required</Label>
-            <Input type="number" placeholder="" {...register("dueDate")} />
+            <Label className="mr-5">Due Date</Label>
+            <DatePicker
+              selected={dueDate}
+              onChange={(date) => setDueDate(date)}
+              className="border rounded p-2"
+            />
           </div>
           <div className="p-4 pb-0">
             <span>Description</span>

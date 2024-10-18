@@ -14,106 +14,44 @@ import {
   userNavLinks,
 } from "@/lib/navlinks";
 import { useSession } from "next-auth/react";
-import { fetchColuges } from "@/app/utils/actions/fetchColleges";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export default function Sidebar() {
   const { data: session, status } = useSession();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Kishor Zadid",
-      avatar: "https://avatars.githubusercontent.com/u/7904326?v=4",
-    },
-    { id: 1, name: "John Doe", avatar: "https://github.com/shadcn.png" },
-    {
-      id: 2,
-      name: "Jane Smith",
-      avatar: "https://github.com/shadcn.png",
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      avatar: "https://github.com/shadcn.png",
-    },
-    { id: 1, name: "John Doe", avatar: "https://github.com/shadcn.png" },
-    {
-      id: 2,
-      name: "Jane Smith",
-      avatar: "https://github.com/shadcn.png",
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      avatar: "https://github.com/shadcn.png",
-    },
-    { id: 1, name: "John Doe", avatar: "https://github.com/shadcn.png" },
-    {
-      id: 2,
-      name: "Jane Smith",
-      avatar: "https://github.com/shadcn.png",
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      avatar: "https://github.com/shadcn.png",
-    },
-    { id: 1, name: "John Doe", avatar: "https://github.com/shadcn.png" },
-    {
-      id: 2,
-      name: "Jane Smith",
-      avatar: "https://github.com/shadcn.png",
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      avatar: "https://github.com/shadcn.png",
-    },
-    { id: 1, name: "John Doe", avatar: "https://github.com/shadcn.png" },
-    {
-      id: 2,
-      name: "Jane Smith",
-      avatar: "https://github.com/shadcn.png",
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      avatar: "https://github.com/shadcn.png",
-    },
-    { id: 1, name: "John Doe", avatar: "https://github.com/shadcn.png" },
-    {
-      id: 2,
-      name: "Jane Smith",
-      avatar: "https://github.com/shadcn.png",
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      avatar: "https://github.com/shadcn.png",
-    },
-  ]);
+  const [users, setUsers] = useState([]); // State to hold tasks
   const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  //const [tasks, setTasks] = useState([]); // State to hold tasks
+  const fetchData = async () => {
+    if (session?.user?.id) {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/company/${session?.user?.id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${session?.accessToken}`,
+            },
+          }
+        );
 
-  // // Fetch tasks from API on component mount
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     if (session?.user?.id) {
-  //       try {
-  //         const response = await fetchColuges({ author: session.user.id });
-  //         setTasks(response); // Set fetched tasks to state
-  //       } catch (error) {
-  //         console.error("Error fetching tasks:", error);
-  //       }
-  //     }
-  //   };
+        if (response.ok) {
+          const data = await response.json();
+          setUsers(data.data);
+          console.log(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    }
+  };
 
-  //   fetchData();
-  // }, [session]);
+  useEffect(() => {
+    fetchData();
+  }, [session]);
 
   if (status === "loading") {
     return <div>Loading...</div>;
@@ -168,16 +106,20 @@ export default function Sidebar() {
                   </Button>
                 </Link>
                 {filteredUsers.map((user) => (
-                  <Link key={user.id} href="/dashboard/user/1">
+                  <Link key={user.id} href={`/dashboard/task/${user?._id}`}>
                     <Button
                       variant="ghost"
                       className="w-full justify-start mb-2"
                     >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-6 h-6 rounded-full mr-2"
-                      />
+                      <Avatar className="w-6 h-6 rounded-full mr-2">
+                        <AvatarFallback>
+                          {user.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}{" "}
+                          {/* Get initials */}
+                        </AvatarFallback>
+                      </Avatar>
                       <span>{user.name}</span>
                     </Button>
                   </Link>

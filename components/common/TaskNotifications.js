@@ -1,195 +1,188 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Star,
-  Bell,
-  MousePointer,
-  Calendar,
-  UserRoundCheck,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { useSession } from "next-auth/react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Bell, Calendar, Clock } from "lucide-react";
+import { Button } from "../ui/button";
+import TaskList from "./TaskList";
+import TaskDetails from "./TaskDetails";
 
 export default function TaskNotifications() {
-  const [notifications, setNotifications] = useState({
-    dueTasks: [
-      {
-        id: 1,
-        text: "Complete project proposal",
-        read: false,
-        assignee: "Kishor Zadid",
-        date: "2023-09-30",
-      },
-      {
-        id: 2,
-        text: "Review team performance",
-        read: true,
-        assignee: "Kishor Zadid",
-        date: "2023-10-05",
-      },
-    ],
-    newAssignments: [
-      {
-        id: 3,
-        text: "Prepare quarterly report",
-        read: false,
-        assignee: "Kishor Zadid",
-        date: "2023-10-10",
-      },
-      {
-        id: 4,
-        text: "Update client presentation",
-        read: false,
-        assignee: "Kishor Zadid",
-        date: "2023-10-15",
-      },
-    ],
-  });
+  const { data: session, status } = useSession();
+  const [dueTasks, setDueTasks] = useState();
+  const [upcommingTasks, setUpcommingTasks] = useState();
+  const [error, setError] = useState();
+  const [selectedTask, setSelectedTask] = useState();
+  const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
 
-  const toggleNotification = (category, id) => {
-    setNotifications((prevNotifications) => ({
-      ...prevNotifications,
-      [category]: prevNotifications[category].map((notification) =>
-        notification.id === id
-          ? { ...notification, read: !notification.read }
-          : notification
-      ),
-    }));
+  // Fetch tasks function
+  const fetchDueTasks = async () => {
+    const token = session?.accessToken;
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/task/duetasks/${session.user.id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+
+      setDueTasks(data.data);
+    } else {
+      console.error("Failed to fetch tasks", response.statusText);
+    }
   };
 
-  const renderNotifications = (category) => (
-    <ScrollArea className="h-[300px]">
-      <div className="space-y-2">
-        {notifications[category].map((notification) => (
-          <div
-            key={notification.id}
-            className="flex items-center space-x-2 bg-white p-3 rounded-lg shadow"
-          >
-            <Checkbox
-              checked={notification.read}
-              onCheckedChange={() =>
-                toggleNotification(category, notification.id)
-              }
-              id={`notification-${notification.id}`}
-            />
-            <label
-              htmlFor={`notification-${notification.id}`}
-              className={`flex-1 ${
-                notification.read ? "text-gray-500" : "font-medium"
-              }`}
-            >
-              {notification.text}
-            </label>
-            <span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Badge
-                      variant="outline"
-                      className="flex items-center gap-1"
-                    >
-                      <UserRoundCheck className="h-3 w-3" />
-                      Kishor Zadid
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Created By Kishor Zadid</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </span>
-            <span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Badge className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      Sep 24th 24
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Deadline</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </span>
+  const fetchUpcommingTasks = async () => {
+    const token = session?.accessToken;
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/task/upcommingtasks/${session.user.id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Button variant="ghost" size="icon">
-                    <Star className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Mark As Important</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+    if (response.ok) {
+      const data = await response.json();
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openTaskDrawer(task)}
-                  >
-                    <MousePointer className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>View Details</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
-  );
+      setUpcommingTasks(data.data);
+    } else {
+      console.error("Failed to fetch tasks", response.statusText);
+    }
+  };
+
+  useEffect(() => {
+    if (session) {
+      fetchDueTasks();
+      fetchUpcommingTasks();
+    }
+  }, [session]);
+
+  const handleMarkAsImportant = async (taskId) => {
+    const token = session?.accessToken;
+    const task = upcommingTasks.find((t) => t._id === taskId);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/task/${taskId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ important: !task?.important }), // Toggle important status
+      }
+    );
+
+    if (response.ok) {
+      fetchUpcommingTasks(); // Refetch tasks to reflect changes
+    } else {
+      console.error("Failed to mark task as important", response.statusText);
+    }
+  };
+
+  const handleToggleTaskCompletion = async (taskId) => {
+    const token = session?.accessToken;
+    const task = upcommingTasks.find((t) => t._id === taskId);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/task/${taskId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: task.status === "completed" ? "pending" : "completed",
+        }),
+      }
+    );
+
+    if (response.ok) {
+      fetchUpcommingTasks(); // Refetch tasks to reflect changes
+    } else {
+      console.error("Failed to update task status", response.statusText);
+    }
+  };
+
+  const handleNewTaskSubmit = async (data) => {};
+
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+    setIsTaskDetailsOpen(true);
+  };
+
+  const handleTaskUpdate = async (updatedTask) => {
+    // Update the task in the local state
+
+    await fetchUpcommingTasks();
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="flex justify-center items-center h-64">Loading...</div>
+    );
+  }
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
 
   return (
-    <Card className="w-full mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2">
-          <Bell className="h-6 w-6" />
-          Notifications
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="due" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="due" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Due Tasks
-            </TabsTrigger>
-            <TabsTrigger value="new" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              New Assignments
-            </TabsTrigger>
-          </TabsList>
-          <div className="mt-4">
-            <TabsContent value="due">
-              {renderNotifications("dueTasks")}
-            </TabsContent>
-            <TabsContent value="new">
-              {renderNotifications("newAssignments")}
-            </TabsContent>
-          </div>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className="">
+      <Card className="w-full mx-auto">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-2xl font-bold">Due Tasks</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <h2>Due Tasks</h2>
+          <TaskList
+            tasks={dueTasks}
+            onMarkAsImportant={handleMarkAsImportant}
+            onToggleTaskCompletion={handleToggleTaskCompletion}
+            onNewTaskSubmit={handleNewTaskSubmit}
+            showAddTaskForm={false}
+            onTaskClick={handleTaskClick}
+          />
+          <TaskDetails
+            task={selectedTask}
+            isOpen={isTaskDetailsOpen}
+            onClose={() => setIsTaskDetailsOpen(false)}
+            onUpdate={handleTaskUpdate}
+          />
+        </CardContent>
+      </Card>
+      <Card className="w-full  mx-auto">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-2xl font-bold">Upcomming Task</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TaskList
+            tasks={upcommingTasks}
+            onMarkAsImportant={handleMarkAsImportant}
+            onToggleTaskCompletion={handleToggleTaskCompletion}
+            onNewTaskSubmit={handleNewTaskSubmit}
+            showAddTaskForm={false}
+            onTaskClick={handleTaskClick}
+          />
+          <TaskDetails
+            task={selectedTask}
+            isOpen={isTaskDetailsOpen}
+            onClose={() => setIsTaskDetailsOpen(false)}
+            onUpdate={handleTaskUpdate}
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

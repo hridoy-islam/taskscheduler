@@ -6,16 +6,16 @@ import TaskList from "@/components/common/TaskList";
 import { useParams } from "next/navigation";
 
 export default function Page() {
-  const { userid } = useParams();
+  const { companyid } = useParams();
   const [tasks, setTasks] = useState([]);
   const { data: session } = useSession();
-  const [userDetail, setUserDetail] = useState();
+  const [companyDetails, setCompanyDetails] = useState();
 
   // Fetch tasks function
   const fetchTasks = async () => {
     const token = session?.accessToken;
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/task/getbothuser/${session.user.id}/${userid}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/task?company=${companyid}`,
       {
         method: "GET",
         headers: {
@@ -26,15 +26,15 @@ export default function Page() {
 
     if (response.ok) {
       const data = await response.json();
-      setTasks(data.data);
+      setTasks(data.data.result);
     } else {
       console.error("Failed to fetch tasks", response.statusText);
     }
   };
-  const fetchUserDetails = async () => {
+  const fetchCompanyDetails = async () => {
     const token = session?.accessToken;
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/users/${userid}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/users/${companyid}`,
       {
         method: "GET",
         headers: {
@@ -45,8 +45,7 @@ export default function Page() {
 
     if (response.ok) {
       const data = await response.json();
-      // setTasks(data.data.result);
-      setUserDetail(data.data);
+      setCompanyDetails(data.data);
     } else {
       console.error("Failed to fetch tasks", response.statusText);
     }
@@ -55,7 +54,7 @@ export default function Page() {
   useEffect(() => {
     if (session) {
       fetchTasks();
-      fetchUserDetails();
+      fetchCompanyDetails();
     }
   }, [session]);
 
@@ -129,13 +128,15 @@ export default function Page() {
   };
   return (
     <>
-      <h1 className="text-xl font-semibold">{userDetail?.name}</h1>
+      <h1 className="text-xl font-semibold">
+        Company Name : {companyDetails?.name}
+      </h1>
       <TaskList
         tasks={tasks}
         onMarkAsImportant={handleMarkAsImportant}
         onToggleTaskCompletion={handleToggleTaskCompletion}
         onNewTaskSubmit={handleNewTaskSubmit}
-        showAddTaskForm={true} // Set to true to show the add task form
+        showAddTaskForm={false} // Set to true to show the add task form
       />
     </>
   );

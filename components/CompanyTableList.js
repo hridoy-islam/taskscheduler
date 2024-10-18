@@ -110,10 +110,12 @@ export default function CompanyTableList({ refreshKey }) {
                     <Pencil className="mr-2 h-4 w-4" />
                     Edit
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <Eye className="mr-2 h-4 w-4" />
-                    View Tasks
-                  </Button>
+                  <Link href={`/dashboard/company/tasks/${user._id}`}>
+                    <Button variant="outline" size="sm">
+                      <Eye className="mr-2 h-4 w-4" />
+                      View Tasks
+                    </Button>
+                  </Link>
                   <Link href={`/dashboard/company/usermanage/${user._id}`}>
                     <Button>
                       <ArrowLeftRight className="mr-2 h-4 w-4" />
