@@ -41,10 +41,9 @@ export default function Sidebar() {
         if (response.ok) {
           const data = await response.json();
           setUsers(data.data);
-          console.log(data.data);
         }
       } catch (error) {
-        console.error("Error fetching tasks:", error);
+        console.error("Error fetching users:", error);
       }
     }
   };

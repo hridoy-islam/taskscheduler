@@ -6,7 +6,7 @@ import TaskList from "@/components/common/TaskList";
 import moment from "moment";
 
 export default function Page() {
-  const today = moment().format("MMMM Do YYYY");
+  const today = moment().startOf("day").toISOString();
   const [tasks, setTasks] = useState([]);
   const { data: session } = useSession();
 
@@ -14,7 +14,7 @@ export default function Page() {
   const fetchTasks = async () => {
     const token = session?.accessToken;
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/task?assigned=${session.user.id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/task/today/${session.user.id}`,
       {
         method: "GET",
         headers: {
@@ -25,7 +25,7 @@ export default function Page() {
 
     if (response.ok) {
       const data = await response.json();
-      setTasks(data.data.result);
+      setTasks(data.data);
     } else {
       console.error("Failed to fetch tasks", response.statusText);
     }

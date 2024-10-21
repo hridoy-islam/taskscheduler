@@ -654,7 +654,6 @@
 //     </div>
 //   );
 // }
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -665,7 +664,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Popover,
@@ -681,7 +679,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "next-auth/react";
-import { fetchTasks } from "@/app/utils/actions/fetchTasks"; // Ensure this function is defined to fetch tasks
+import moment from "moment";
 
 const daysOfWeek = [
   "Sunday",
@@ -702,22 +700,38 @@ export default function Planner() {
   const [view, setView] = useState("month");
   const [tasks, setTasks] = useState([]);
 
-  // Fetch tasks based on the current date and view
   const fetchTasksByRange = async (date) => {
     if (session?.user?.id) {
       try {
-        const range =
-          view === "day"
-            ? { type: "day", value: 0 }
-            : view === "week"
-            ? { type: "week", value: 1 }
-            : { type: "month", value: 1 }; // Adjust for month view
-        const response = await fetchTasks({
-          author: session.user.id,
-          range,
-          date,
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const week = String(Math.ceil(date.getDate() / 7)).padStart(2, "0");
+        const token = session.accessToken; // Assuming you have the token in the session
+
+        let url;
+
+        if (view === "day") {
+          const formattedDate = date.toISOString().split("T")[0];
+          url = `${process.env.NEXT_PUBLIC_API_URL}/tasks?date=${formattedDate}&author=${session.user.id}`;
+        } else if (view === "week") {
+          url = `${process.env.NEXT_PUBLIC_API_URL}/tasks?year=${year}&week=${week}&author=${session.user.id}`;
+        } else {
+          url = `${process.env.NEXT_PUBLIC_API_URL}/tasks?year=${year}&month=${month}&author=${session.user.id}`;
+        }
+
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
-        setTasks(response);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch tasks");
+        }
+
+        const tasksData = await response.json();
+        setTasks(tasksData);
       } catch (error) {
         console.error("Error fetching tasks:", error);
       }

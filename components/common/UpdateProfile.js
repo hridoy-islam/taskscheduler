@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,15 +12,53 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useSession } from "next-auth/react";
 
 export default function UpdateProfile({ data }) {
+  const { data: session } = useSession();
+  const token = session?.accessToken;
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: data.name,
-    email: data.email,
-
+    name: "",
+    email: "",
     avatar: "/placeholder.svg",
+    address: "",
   });
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/${session?.user?.id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch profile data");
+        }
+
+        const data = await response.json();
+        console.log(data);
+        setProfileData({
+          name: data.data.name,
+          email: data.data.email,
+          avatar: data.data.image || "/placeholder.svg",
+          address: data.data.address || "",
+        });
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [session]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -30,9 +68,27 @@ export default function UpdateProfile({ data }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsLoading(false);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/${session?.user?.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(profileData), // Send the profile data
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAvatarChange = (e) => {
@@ -61,8 +117,8 @@ export default function UpdateProfile({ data }) {
               <Avatar className="w-32 h-32">
                 <AvatarImage src={profileData.avatar} alt="Profile picture" />
                 <AvatarFallback>
-                  {profileData.name
-                    .split(" ")
+                  {profileData?.name
+                    ?.split(" ")
                     .map((n) => n[0])
                     .join("")}
                 </AvatarFallback>
@@ -99,8 +155,17 @@ export default function UpdateProfile({ data }) {
                 name="email"
                 type="email"
                 value={profileData.email}
+                disabled
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Address</Label>
+              <Input
+                id="address"
+                name="address"
+                type="text"
+                value={profileData?.address}
                 onChange={handleInputChange}
-                required
               />
             </div>
           </CardContent>

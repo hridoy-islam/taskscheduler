@@ -104,7 +104,7 @@ export default function TaskNotifications() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          status: task.status === "completed" ? "pending" : "completed",
+          status: task?.status === "completed" ? "pending" : "completed",
         }),
       }
     );
