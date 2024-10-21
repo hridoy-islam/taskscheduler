@@ -11,6 +11,7 @@ import {
   adminNavLinks,
   companyNavLinks,
   creatorNavLinks,
+  directorNavLinks,
   userNavLinks,
 } from "@/lib/navlinks";
 import { useSession } from "next-auth/react";
@@ -69,6 +70,10 @@ export default function Sidebar() {
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             {session?.user?.role === "admin" &&
               adminNavLinks.map((link) => (
+                <SidebarLink key={link.label} {...link} />
+              ))}
+              {session?.user?.role === "director" &&
+              directorNavLinks.map((link) => (
                 <SidebarLink key={link.label} {...link} />
               ))}
             {session?.user?.role === "company" &&

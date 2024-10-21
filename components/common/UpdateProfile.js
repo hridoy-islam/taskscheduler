@@ -68,6 +68,7 @@ export default function UpdateProfile({ data }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log(profileData);
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/users/${session?.user?.id}`,
